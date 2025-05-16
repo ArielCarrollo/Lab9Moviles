@@ -1,4 +1,4 @@
-// Guardar como Assets/Scripts/Game/PlayerController.cs
+
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -15,31 +15,34 @@ public class PlayerController : MonoBehaviour
     public LayerMask platformLayer;
     private bool isGrounded;
 
+    [Header("Touch Settings")]
+    [Range(0.1f, 0.4f)]
+    public float leftRegion = 0.3f;
+    [Range(0.6f, 0.9f)]
+    public float rightRegion = 0.7f;
+
     [Header("Scoring")]
     private float maxHeightReached = 0f;
     public float GetMaxHeightReached() => maxHeightReached;
 
     [Header("Death Handling")]
-
     public float fallDeathYPosition = -5f;
-
     public delegate void PlayerDiedAction(float finalScore);
     public static event PlayerDiedAction OnPlayerDied;
 
     private Camera mainCamera;
-
-  
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         mainCamera = Camera.main;
     }
+
     void Update()
     {
         if (GameManager.Instance != null && GameManager.Instance.isGameOver) return;
 
-        HandleInput();
+        HandleTouchInput();
         CheckIfGrounded();
         UpdateHeight();
         CheckForFall();
@@ -49,52 +52,45 @@ public class PlayerController : MonoBehaviour
     {
         if (GameManager.Instance != null && GameManager.Instance.isGameOver)
         {
-            rb.linearVelocity = Vector2.zero; 
+            rb.linearVelocity = Vector2.zero;
             return;
         }
         HandleMovement();
     }
-    public void InitializePositionAndHeight(Vector3 startPosition)
+
+    void HandleTouchInput()
     {
-        transform.position = startPosition;
-        maxHeightReached = startPosition.y; 
-        isGrounded = true;
-        if (rb == null) rb = GetComponent<Rigidbody2D>(); 
-        rb.linearVelocity = Vector2.zero; 
-    }
-    void HandleInput()
-    {
+        horizontalInput = 0f;
+        bool leftTouched = false;
+        bool rightTouched = false;
 
-        horizontalInput = Input.GetAxis("Horizontal");
-
-        if (Input.GetButtonDown("Jump") && isGrounded)
+        foreach (Touch touch in Input.touches)
         {
-            Jump();
-        }
-
-        if (Input.touchCount > 0)
-        {
-            Touch touch = Input.GetTouch(0);
-
-            if (touch.phase == TouchPhase.Began && isGrounded)
+            if (touch.phase == TouchPhase.Began || touch.phase == TouchPhase.Stationary || touch.phase == TouchPhase.Moved)
             {
-                Jump();
-            }
+                float touchX = touch.position.x;
+                float screenWidth = Screen.width;
 
-
-            if (touch.position.x < Screen.width / 2)
-            {
-                horizontalInput = -1f;
-            }
-            else if (touch.position.x > Screen.width / 2)
-            {
-                horizontalInput = 1f;
+                if (touchX < screenWidth * leftRegion)
+                {
+                    leftTouched = true;
+                }
+                else if (touchX > screenWidth * rightRegion)
+                {
+                    rightTouched = true;
+                }
+                else 
+                {
+                    if (touch.phase == TouchPhase.Began)
+                    {
+                        Jump();
+                    }
+                }
             }
         }
-        else if (Input.GetAxis("Horizontal") == 0 && Input.touchCount == 0)
-        {
-            horizontalInput = 0f; 
-        }
+
+        if (leftTouched) horizontalInput = -1f;
+        else if (rightTouched) horizontalInput = 1f;
     }
 
     void HandleMovement()
@@ -102,16 +98,18 @@ public class PlayerController : MonoBehaviour
         rb.linearVelocity = new Vector2(horizontalInput * moveSpeed, rb.linearVelocity.y);
     }
 
-    void Jump()
+    public void Jump()
     {
-        rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f); 
-        rb.AddForce(new Vector2(0f, jumpForce), (ForceMode2D)ForceMode.Impulse);
-        isGrounded = false;
+        if (isGrounded)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
+            rb.AddForce(new Vector2(0f, jumpForce), (ForceMode2D)ForceMode.Impulse);
+            isGrounded = false;
+        }
     }
 
     void CheckIfGrounded()
     {
-
         if (rb.linearVelocity.y <= 0.1f)
         {
             Collider2D hitCollider = Physics2D.OverlapCircle(groundCheckPoint.position, groundCheckRadius, platformLayer);
@@ -133,10 +131,8 @@ public class PlayerController : MonoBehaviour
 
     void CheckForFall()
     {
-
         if (mainCamera != null)
         {
-
             fallDeathYPosition = mainCamera.transform.position.y - mainCamera.orthographicSize - 2f;
         }
 
@@ -148,7 +144,7 @@ public class PlayerController : MonoBehaviour
 
     void Die()
     {
-        if (GameManager.Instance != null && GameManager.Instance.isGameOver) return; 
+        if (GameManager.Instance != null && GameManager.Instance.isGameOver) return;
 
         Debug.Log("Player Died. Max Height: " + maxHeightReached);
         gameObject.SetActive(false);
@@ -166,9 +162,8 @@ public class PlayerController : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        if (((1 << collision.gameObject.layer) & platformLayer) != 0) 
+        if (((1 << collision.gameObject.layer) & platformLayer) != 0)
         {
-            // Verifica si el contacto es desde arriba
             foreach (ContactPoint2D contact in collision.contacts)
             {
                 if (contact.normal.y > 0.7f)
@@ -178,5 +173,14 @@ public class PlayerController : MonoBehaviour
                 }
             }
         }
+    }
+
+    public void InitializePositionAndHeight(Vector3 startPosition)
+    {
+        transform.position = startPosition;
+        maxHeightReached = startPosition.y;
+        isGrounded = true;
+        if (rb == null) rb = GetComponent<Rigidbody2D>();
+        rb.linearVelocity = Vector2.zero;
     }
 }

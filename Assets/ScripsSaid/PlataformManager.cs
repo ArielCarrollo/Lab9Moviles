@@ -24,6 +24,14 @@ public class PlatformManager : MonoBehaviour
     public float maxMoveSpeed = 3f;
     public float minMoveDistance = 2f;
     public float maxMoveDistance = 4f;
+    [Header("UI Controls")]
+    public RectTransform leftButton;
+    public RectTransform rightButton;
+    public RectTransform jumpButton;
+
+    private bool leftPressed;
+    private bool rightPressed;
+    private bool jumpPressed;
 
     private List<PoolObject> activePlatforms = new List<PoolObject>();
     private float lastSpawnedYPosition;
