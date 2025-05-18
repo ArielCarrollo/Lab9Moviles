@@ -10,12 +10,7 @@ public class UserSO : ScriptableObject
 
     public void SetUserData(string nickName, int id)
     {
-        // Si el ID es 0 (valor por defecto), generar uno nuevo
-        if (id == 0)
-        {
-            id = Random.Range(1000000, 9999999);
-        }
-        userData = new User(nickName, id, userData?.highScore ?? 0); // Mantener el highScore existente
+        userData = new User(nickName, id, 0);
     }
 
     public bool TrySetNewScore(int score)
@@ -28,6 +23,7 @@ public class UserSO : ScriptableObject
         return false;
     }
 }
+
 
 
 

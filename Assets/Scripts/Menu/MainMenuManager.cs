@@ -24,16 +24,11 @@ public class MainMenuManager : MonoBehaviour
         string nombre = nombreInputField.text.Trim();
         if (string.IsNullOrEmpty(nombre)) return;
 
-        // Comparar con el nickname actual del UserSO
+        // Generar un nuevo ID solo si el nickname es diferente
         if (nombre != userSO.UserData.nickName)
         {
-            int nuevoID = UnityEngine.Random.Range(1000000, 9999999);
-            userSO.SetUserData(nombre, nuevoID); // Generar nuevo ID solo si el nombre cambia
-        }
-        else
-        {
-            // Mantener el ID existente si el nickname es el mismo
-            userSO.SetUserData(nombre, userSO.UserData.id);
+            int id = UnityEngine.Random.Range(1000000, 9999999);
+            userSO.SetUserData(nombre, id);
         }
 
         onUserReadyToUpload?.Raise();
