@@ -1,5 +1,7 @@
 using UnityEngine;
 using TMPro;
+using System.Collections.Generic;
+using System;
 using UnityEngine.SceneManagement;
 
 public class MainMenuManager : MonoBehaviour
@@ -7,6 +9,9 @@ public class MainMenuManager : MonoBehaviour
     public TMP_InputField nombreInputField;
     public UserSO userSO;
     public GameEvent onUserReadyToUpload;
+    [Header("Puntajes")]
+    [SerializeField] private GameObject scoresPanel;
+    [SerializeField] private TMP_Text[] scoreTexts;
 
     private void Start()
     {
@@ -19,8 +24,17 @@ public class MainMenuManager : MonoBehaviour
         string nombre = nombreInputField.text.Trim();
         if (string.IsNullOrEmpty(nombre)) return;
 
-        int id = Random.Range(1000000, 9999999);
-        userSO.SetUserData(nombre, id);
+        // Comparar con el nickname actual del UserSO
+        if (nombre != userSO.UserData.nickName)
+        {
+            int nuevoID = UnityEngine.Random.Range(1000000, 9999999);
+            userSO.SetUserData(nombre, nuevoID); // Generar nuevo ID solo si el nombre cambia
+        }
+        else
+        {
+            // Mantener el ID existente si el nickname es el mismo
+            userSO.SetUserData(nombre, userSO.UserData.id);
+        }
 
         onUserReadyToUpload?.Raise();
     }
@@ -33,9 +47,32 @@ public class MainMenuManager : MonoBehaviour
 
     public void VerPuntajes()
     {
-        // Puedes cargar una escena o abrir un panel
-        Debug.Log("Puntajes aún no implementado");
+        scoresPanel.SetActive(true);
+        StartCoroutine(DatabaseHandler.Instance.GetTopHighScores(scoreTexts.Length, MostrarScores));
     }
+
+    private void MostrarScores(List<(string name, int score)> topScores)
+    {
+        for (int i = 0; i < scoreTexts.Length; i++)
+        {
+            if (i < topScores.Count)
+            {
+                var entry = topScores[i];
+                scoreTexts[i].text = $"{i + 1}. {entry.name} - {entry.score}";
+            }
+            else
+            {
+                scoreTexts[i].text = $"{i + 1}. ---";
+            }
+        }
+    }
+
+
+    public void CerrarPanelPuntajes()
+    {
+        scoresPanel.SetActive(false);
+    }
+
 
     public void Salir()
     {
