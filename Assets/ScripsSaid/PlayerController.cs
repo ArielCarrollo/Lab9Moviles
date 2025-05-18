@@ -27,8 +27,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Death Handling")]
     public float fallDeathYPosition = -5f;
-    public delegate void PlayerDiedAction(float finalScore);
-    public static event PlayerDiedAction OnPlayerDied;
+    [SerializeField] private GameEventFloat onPlayerDiedEvent;
 
     private Camera mainCamera;
 
@@ -148,7 +147,8 @@ public class PlayerController : MonoBehaviour
 
         Debug.Log("Player Died. Max Height: " + maxHeightReached);
         gameObject.SetActive(false);
-        OnPlayerDied?.Invoke(maxHeightReached);
+
+        onPlayerDiedEvent.Raise(ScoreManager.Instance.CurrentScore);
     }
 
     void OnDrawGizmosSelected()
@@ -164,11 +164,22 @@ public class PlayerController : MonoBehaviour
     {
         if (((1 << collision.gameObject.layer) & platformLayer) != 0)
         {
+            bool newPlatformTouched = true;
+
             foreach (ContactPoint2D contact in collision.contacts)
             {
                 if (contact.normal.y > 0.7f)
                 {
                     isGrounded = true;
+
+                    if (collision.gameObject.TryGetComponent<Platform>(out var platform))
+                    {
+                        if (!platform.HasBeenTouched)
+                        {
+                            platform.MarkAsTouched();
+                            ScoreManager.Instance.AddScore(1);
+                        }
+                    }
                     break;
                 }
             }

@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class Platform : MonoBehaviour
 {
+    private bool _hasBeenTouched = false;
+    public bool HasBeenTouched => _hasBeenTouched;
     public enum MovementPattern { None, HorizontalPingPong }
     private MovementPattern currentPattern = MovementPattern.None;
 
@@ -33,4 +35,16 @@ public class Platform : MonoBehaviour
             transform.position = new Vector3(newX, transform.position.y, transform.position.z);
         }
     }
+    public void MarkAsTouched()
+    {
+        _hasBeenTouched = true;
+        GetComponent<SpriteRenderer>().color = Color.gray;
+    }
+
+    public void ResetPlatform()
+    {
+        _hasBeenTouched = false;
+        GetComponent<SpriteRenderer>().color = Color.white;
+    }
+
 }

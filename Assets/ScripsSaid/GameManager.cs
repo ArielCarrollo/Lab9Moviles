@@ -3,57 +3,38 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 
-public class GameManager : MonoBehaviour
+public class GameManager : SingletonNonPersistent<GameManager>
 {
-    public static GameManager Instance;
-
     public bool isGameOver = false;
     private float finalScore = 0f;
 
+    [SerializeField] private GameEventFloat onPlayerDiedEvent;
 
-    void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-
+    [SerializeField] private GameObject restartPanel;
     void Start()
     {
         Time.timeScale = 1f; 
         isGameOver = false;
-
-
-        PlayerController.OnPlayerDied += HandlePlayerDeath;
     }
 
-    void OnDestroy()
-    {
-        PlayerController.OnPlayerDied -= HandlePlayerDeath; 
-    }
-
-    void HandlePlayerDeath(float score)
+    public void HandlePlayerDeath()
     {
         if (isGameOver) return;
-
         isGameOver = true;
-        finalScore = score;
-        Time.timeScale = 0f; 
 
-        Debug.Log($"GAME OVER! Altura Final: {finalScore:F2}"); 
+        finalScore = ScoreManager.Instance.CurrentScore;
+        onPlayerDiedEvent.Raise(finalScore);
 
+        Debug.Log($"GAME OVER! Puntaje Final: {finalScore}");
+        restartPanel.SetActive(true);
+        Time.timeScale = 0f;
     }
-
 
     public void RestartGame()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        ScoreManager.Instance.Initialize();
+        SceneManager.LoadScene("Menu");
     }
-   
+
 }

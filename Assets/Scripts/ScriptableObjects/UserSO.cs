@@ -10,25 +10,20 @@ public class UserSO : ScriptableObject
 
     public void SetUserData(string nickName, int id)
     {
-        userData = new User(nickName, id, new int[0]);
+        userData = new User(nickName, id, 0);
     }
 
-    public void AddScore(int score)
+    public bool TrySetNewScore(int score)
     {
-        List<int> updatedScores = new List<int>(userData.scores);
-
-        if (updatedScores.Count < 5)
+        if (score > userData.highScore)
         {
-            updatedScores.Add(score);
+            userData.highScore = score;
+            return true;
         }
-        else
-        {
-            updatedScores.RemoveAt(0); // FIFO
-            updatedScores.Add(score);
-        }
-
-        userData.scores = updatedScores.ToArray();
+        return false;
     }
 }
+
+
 
 
