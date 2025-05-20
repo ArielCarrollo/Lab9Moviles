@@ -3,33 +3,49 @@ using TMPro;
 using System.Collections.Generic;
 using System;
 using UnityEngine.SceneManagement;
+using Firebase.Auth;
 
 public class MainMenuManager : MonoBehaviour
 {
-    public TMP_InputField nombreInputField;
     public UserSO userSO;
     public GameEvent onUserReadyToUpload;
+
     [Header("Puntajes")]
     [SerializeField] private GameObject scoresPanel;
     [SerializeField] private TMP_Text[] scoreTexts;
 
     private void Start()
     {
-        // Cargar nombre si ya existía
-        nombreInputField.text = userSO.UserData.nickName;
+        // Asignar el email como nickName, si el usuario está autenticado
+        var currentUser = FirebaseAuth.DefaultInstance.CurrentUser;
+        if (currentUser != null)
+        {
+            string email = currentUser.Email;
+            if (!string.IsNullOrEmpty(email))
+            {
+                userSO.SetUserData(email, userSO.UserData.id); // Mantén el id si lo tienes o pon uno
+            }
+        }
     }
 
     public void GuardarNombre()
     {
-        string nombre = nombreInputField.text.Trim();
-        if (string.IsNullOrEmpty(nombre)) return;
-
-        // Generar un nuevo ID solo si el nickname es diferente
-        if (nombre != userSO.UserData.nickName)
+        var currentUser = FirebaseAuth.DefaultInstance.CurrentUser;
+        if (currentUser == null)
         {
-            int id = UnityEngine.Random.Range(1000000, 9999999);
-            userSO.SetUserData(nombre, id);
+            Debug.LogWarning("No user authenticated");
+            return;
         }
+
+        string email = currentUser.Email;
+        if (string.IsNullOrEmpty(email)) return;
+
+        // Si quieres mantener un id, asegúrate de que esté asignado:
+        int id = userSO.UserData.id;
+        if (id == 0)
+            id = UnityEngine.Random.Range(1000000, 9999999);
+
+        userSO.SetUserData(email, id);
 
         onUserReadyToUpload?.Raise();
     }
@@ -43,7 +59,7 @@ public class MainMenuManager : MonoBehaviour
     public void VerPuntajes()
     {
         scoresPanel.SetActive(true);
-        StartCoroutine(DatabaseHandler.Instance.GetTopHighScores(scoreTexts.Length, MostrarScores));
+        FirestoreHandler.Instance.GetTopHighScores(scoreTexts.Length, MostrarScores);
     }
 
     private void MostrarScores(List<(string name, int score)> topScores)
@@ -62,15 +78,14 @@ public class MainMenuManager : MonoBehaviour
         }
     }
 
-
     public void CerrarPanelPuntajes()
     {
         scoresPanel.SetActive(false);
     }
-
 
     public void Salir()
     {
         Application.Quit();
     }
 }
+

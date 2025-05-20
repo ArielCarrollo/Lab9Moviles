@@ -1,11 +1,14 @@
+using Firebase.Firestore;
 using UnityEngine;
+[FirestoreData]
 [System.Serializable]
 public class User
 {
-    public string nickName;
-    public int id;
-    public int highScore;
+    [FirestoreProperty] public string nickName { get; set; }
+    [FirestoreProperty] public int id { get; set; }
+    [FirestoreProperty] public int highScore { get; set; }
 
+    public User() { } // Necesario para Firestore
     public User(string nickName, int id, int highScore)
     {
         this.nickName = nickName;
@@ -13,3 +16,4 @@ public class User
         this.highScore = highScore;
     }
 }
+

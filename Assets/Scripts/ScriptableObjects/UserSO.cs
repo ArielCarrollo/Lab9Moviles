@@ -4,13 +4,14 @@ using System.Collections.Generic;
 [CreateAssetMenu(fileName = "User", menuName = "ScriptableObjects/Example/User")]
 public class UserSO : ScriptableObject
 {
-    [SerializeField] private User userData;
+    [SerializeField] private User userData = new();
 
     public User UserData => userData;
 
     public void SetUserData(string nickName, int id)
     {
-        userData = new User(nickName, id, 0);
+        userData.nickName = nickName;
+        userData.id = id;
     }
 
     public bool TrySetNewScore(int score)
@@ -23,6 +24,7 @@ public class UserSO : ScriptableObject
         return false;
     }
 }
+
 
 
 
